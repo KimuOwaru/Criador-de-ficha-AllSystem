@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criador de Ficha de RPG Genérica</title>
+    <!-- Carregando Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fonte temática -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Biblioteca html2pdf -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-fantasy { font-family: 'Cinzel', serif; }
+        /* Scrollbar estilizado */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        .aspect-ratio-1 { --tw-aspect-ratio: 1 }
+        /* Estética para PDF */
+        .pdf-style {
+            background: #fff;
+            color: #000;
+            font-family: 'Inter', sans-serif;
+            padding: 20px;
+            border-radius: 12px;
+        }
+        .pdf-style h1 {
+            font-family: 'Cinzel', serif;
+            text-align: center;
+            border-bottom: 2px solid #444;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+        .pdf-section {
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 10px 15px;
+        }
+        .pdf-section h3 {
+            font-family: 'Cinzel', serif;
+            font-size: 18px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #aaa;
+            padding-bottom: 4px;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200 min-h-screen p-4 sm:p-6 md:p-8">
+
+    <div class="max-w-5xl mx-auto">
+        <header class="text-center mb-8">
+            <h1 class="font-fantasy text-4xl sm:text-5xl font-bold text-yellow-400">Criador de Ficha de RPG</h1>
+            <p class="text-gray-400 mt-2">Crie sua ficha para qualquer sistema. Você define as regras.</p>
+        </header>
+
+        <main class="bg-gray-800 rounded-2xl shadow-2xl p-6 border-2 border-gray-700" id="sheet-main">
+            
+            <!-- Seção de Informações Gerais -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 pb-6 border-b-2 border-gray-700">
+                <div class="md:col-span-3">
+                    <label for="char-name" class="block text-sm font-medium text-yellow-300 mb-2">Nome do Personagem</label>
+                    <input type="text" id="char-name" placeholder="Ex: Sir Kael, o Valente" class="w-full bg-gray-900 border-2 border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition mb-4">
+                    
+                    <label for="char-image-url" class="block text-sm font-medium text-yellow-300 mb-2">URL da Imagem do Personagem</label>
+                    <input type="url" id="char-image-url" placeholder="https://exemplo.com/imagem.png" class="w-full bg-gray-900 border-2 border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition">
+                </div>
+                <div class="md:col-span-1">
+                     <label class="block text-sm font-medium text-yellow-300 mb-2 text-center">Miniatura</label>
+                     <div id="image-preview" class="w-full aspect-ratio-1 bg-gray-900/50 rounded-lg border-2 border-gray-600 flex items-center justify-center">
+                        <span class="text-gray-500 text-sm">Sem Imagem</span>
+                     </div>
+                </div>
+            </div>
+
+            <!-- Botões principais -->
+            <div class="flex items-center justify-center gap-4 mb-8 flex-wrap">
+                <button id="export-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition transform hover:scale-105">Exportar Ficha</button>
+                <button id="pdf-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition transform hover:scale-105">Baixar PDF</button>
+                <button id="import-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition transform hover:scale-105">Importar Ficha</button>
+            </div>
+
+            <!-- Adicionar novo item -->
+            <div class="mb-8 p-4 bg-gray-900/50 rounded-lg">
+                 <h2 class="font-fantasy text-2xl text-yellow-300 mb-4">Adicionar Novo Item</h2>
+                 <form id="add-item-form" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                     <select id="item-category" class="bg-gray-900 border-2 border-gray-600 rounded-lg px-4 py-2">
+                        <option value="info">Informações</option>
+                        <option value="attributes">Atributos</option>
+                        <option value="skills">Perícias</option>
+                        <option value="spells">Magias</option>
+                        <option value="talents">Talentos</option>
+                        <option value="inventory">Inventário</option>
+                        <option value="abilities">Habilidades</option>
+                     </select>
+                     <input type="text" id="item-name" placeholder="Nome (Ex: Força)" class="bg-gray-900 border-2 border-gray-600 rounded-lg px-4 py-2">
+                     <input type="text" id="item-value" placeholder="Valor (Ex: 18)" class="bg-gray-900 border-2 border-gray-600 rounded-lg px-4 py-2">
+                     <button type="submit" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg">Adicionar</button>
+                 </form>
+
+                 <!-- Criar nova categoria -->
+                 <div class="mt-4 flex gap-2">
+                    <input type="text" id="new-category" placeholder="Nova Categoria" class="flex-1 bg-gray-900 border-2 border-gray-600 rounded-lg px-4 py-2">
+                    <button id="add-category-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg">Criar Categoria</button>
+                 </div>
+            </div>
+
+            <!-- Container da ficha -->
+            <div id="sheet-sections" class="grid grid-cols-1 lg:grid-cols-2 gap-6"></div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const charNameInput = document.getElementById('char-name');
+            const charImageUrlInput = document.getElementById('char-image-url');
+            const imagePreview = document.getElementById('image-preview');
+            const addForm = document.getElementById('add-item-form');
+            const itemCategorySelect = document.getElementById('item-category');
+            const itemNameInput = document.getElementById('item-name');
+            const itemValueInput = document.getElementById('item-value');
+            const sheetSectionsContainer = document.getElementById('sheet-sections');
+            const exportBtn = document.getElementById('export-btn');
+            const pdfBtn = document.getElementById('pdf-btn');
+            const addCategoryBtn = document.getElementById('add-category-btn');
+            const newCategoryInput = document.getElementById('new-category');
+
+            let charName = '';
+            let charImageUrl = '';
+            let sectionTitles = {
+                info: 'Informações do Personagem',
+                attributes: 'Atributos',
+                skills: 'Perícias',
+                spells: 'Magias',
+                talents: 'Talentos',
+                inventory: 'Inventário',
+                abilities: 'Habilidades'
+            };
+            let characterSheet = {
+                info: [], attributes: [], skills: [], spells: [], talents: [], inventory: [], abilities: []
+            };
+
+            const renderSheet = () => {
+                sheetSectionsContainer.innerHTML = '';
+                Object.keys(sectionTitles).forEach(key => {
+                    const sectionDiv = document.createElement('div');
+                    sectionDiv.className = 'bg-gray-900/50 p-4 rounded-lg';
+                    sectionDiv.innerHTML = `<h3 class="font-fantasy text-2xl text-yellow-300 mb-4 border-b-2 border-gray-700 pb-2">${sectionTitles[key]}</h3><div id="${key}-container" class="space-y-3"></div>`;
+                    sheetSectionsContainer.appendChild(sectionDiv);
+                    renderSection(key);
+                });
+                if (charImageUrl) {
+                    imagePreview.innerHTML = `<img src="${charImageUrl}" class="w-full h-full object-cover rounded-md">`;
+                } else {
+                    imagePreview.innerHTML = `<span class="text-gray-500 text-sm">Sem Imagem</span>`;
+                }
+            };
+
+            const renderSection = (category) => {
+                const container = document.getElementById(`${category}-container`);
+                container.innerHTML = '';
+                const items = characterSheet[category];
+                if (!items || items.length === 0) {
+                    container.innerHTML = `<p class="text-gray-500 text-center py-2 text-sm">Vazio</p>`;
+                } else {
+                    items.forEach(item => {
+                        container.innerHTML += `
+                            <div class="flex items-center justify-between bg-gray-700/50 p-3 rounded-lg border border-gray-600">
+                                <div class="flex-grow overflow-hidden">
+                                    <strong class="text-yellow-400">${item.name}:</strong>
+                                    <span class="text-gray-300 ml-2 break-words">${item.value}</span>
+                                </div>
+                                <button data-id="${item.id}" data-category="${category}" class="delete-btn text-gray-500 hover:text-red-500 font-bold text-xl ml-2 px-2">&times;</button>
+                            </div>`;
+                    });
+                }
+            };
+
+            const addItem = (e) => {
+                e.preventDefault();
+                const category = itemCategorySelect.value;
+                const name = itemNameInput.value.trim();
+                const value = itemValueInput.value.trim();
+                if (name && value) {
+                    if (!characterSheet[category]) characterSheet[category] = [];
+                    characterSheet[category].push({ id: Date.now(), name, value });
+                    itemNameInput.value = '';
+                    itemValueInput.value = '';
+                    renderSection(category);
+                }
+            };
+
+            const deleteItem = (id, category) => {
+                characterSheet[category] = characterSheet[category].filter(i => i.id !== id);
+                renderSection(category);
+            };
+
+            const exportPDF = () => {
+                const clone = document.getElementById('sheet-main').cloneNode(true);
+                clone.classList.add("pdf-style");
+                html2pdf().set({
+                    margin: 0.5,
+                    filename: `${charName || "ficha_rpg"}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true },
+                    jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+                }).from(clone).save();
+            };
+
+            const addCategory = () => {
+                const newCat = newCategoryInput.value.trim();
+                if (newCat && !sectionTitles[newCat.toLowerCase()]) {
+                    sectionTitles[newCat.toLowerCase()] = newCat;
+                    characterSheet[newCat.toLowerCase()] = [];
+                    const option = document.createElement("option");
+                    option.value = newCat.toLowerCase();
+                    option.textContent = newCat;
+                    itemCategorySelect.appendChild(option);
+                    renderSheet();
+                    newCategoryInput.value = '';
+                }
+            };
+
+            charNameInput.addEventListener('input', e => charName = e.target.value);
+            charImageUrlInput.addEventListener('input', e => { charImageUrl = e.target.value; renderSheet(); });
+            addForm.addEventListener('submit', addItem);
+            sheetSectionsContainer.addEventListener('click', e => {
+                if (e.target.classList.contains('delete-btn')) deleteItem(Number(e.target.dataset.id), e.target.dataset.category);
+            });
+            pdfBtn.addEventListener('click', exportPDF);
+            addCategoryBtn.addEventListener('click', addCategory);
+
+            renderSheet();
+        });
+    </script>
+</body>
+</html>
